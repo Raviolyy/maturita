@@ -5,8 +5,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
@@ -14,6 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
+      "userInterfaceStyle": "light",
       "bundleIdentifier": "com.ravioly.utery"
     },
     "android": {
@@ -21,6 +22,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+
+      "userInterfaceStyle": "light",
       "package": "com.ravioly.utery"
     },
     "web": {

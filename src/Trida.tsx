@@ -1,32 +1,19 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     View,
     Text,
-    TextInput,
-    Button,
     StyleSheet,
-    ScrollView,
-    FlatList,
-    ViewBase,
-    ViewComponent,
-    TouchableOpacity, Image, Dimensions, useWindowDimensions, Modal,Animated
+    TouchableOpacity,
+    Image,
+    ActivityIndicator,
 } from 'react-native';
 import {database, ref, get, query, orderByChild, equalTo} from "../firebaseconfig"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {ParamListBase, useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
-import {
-    GestureHandlerRootView,
-    Gesture,
-    GestureDetector,
-    PinchGestureHandler, PinchGestureHandlerGestureEvent, PanGestureHandler
-} from "react-native-gesture-handler";
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
-import {
-    fitContainer,
-    ResumableZoom, ResumableZoomType,
-    useImageResolution,
-} from 'react-native-zoom-toolkit';
+import {ALERT_TYPE, AlertNotificationRoot, Toast} from "react-native-alert-notification";
+import Ionicons from '@expo/vector-icons/Ionicons';
 
 interface suplInterface {
     den: string;
@@ -40,8 +27,7 @@ interface suplInterface {
     zastupujici: string;
 }
 
-
-const FetchData = () => {
+const Trida = () => {
     const [lichyTyden, setlichyTyden]  =  useState<[][][]>([]);
     const [sudyTyden, setsudyTyden]  =  useState<[][][] >([]);
     const [tyden,setTyden] = useState<string>()
@@ -49,7 +35,6 @@ const FetchData = () => {
     const [loading,setLoading] = useState(true)
     const [dates,setDates] = useState<string[]>();
     const [datum,setDatum] = useState<Date>()
-    const [nenisupl,setNenisupl] = useState<string[]>()
     const [zatmaveni,setZatmaveni] = useState([styles.bezZatmaveni,styles.bezZatmaveni,styles.bezZatmaveni,styles.bezZatmaveni,styles.bezZatmaveni])
     const casy = [
         {hodina:"0", cas: "7:00 - 7:45"},
@@ -67,8 +52,9 @@ const FetchData = () => {
     ]
     const dny = ["pondělí","úterý","středa","čtvrek","pátek"]
     const [suplData, setSuplData] = useState<suplInterface[]>([])
-    const [chybiciHodiny, setChybiciHodiny] = useState<any[][]>(Array(5).fill(Array(12).fill(styles.nechybi)))
+    const [chybiciHodiny, setChybiciHodiny] = useState<any[]>()
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+
     function formatDateToCustomString(dateInput:Date) {
         const date = new Date(dateInput);
 
@@ -136,17 +122,6 @@ const FetchData = () => {
 
         return weekdays.map(d => formatDateToCustomString(d));
     }
-    function formatDateStringKdyzNeniSupl(dateString:string) {
-        // Split the input string by underscore
-        const [year, month, day] = dateString.split('_');
-
-        // Convert month and day to numbers and format them
-        const formattedMonth = parseInt(month, 10); // Convert to number
-        const formattedDay = parseInt(day, 10); // Convert to number
-
-        // Return the formatted string
-        return `${formattedDay}.${formattedMonth}.`;
-    }
     function getWeekNumber(date: Date): number {
         const startOfYear = new Date(date.getFullYear(), 0, 1);
         const pastDays = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
@@ -162,7 +137,6 @@ const FetchData = () => {
     }
 
     const suplovani =  async ()=>{
-        const neni_supl = []
         setSuplData([])
         const date = datum?datum.toISOString().split('T')[0]:"1.1.";
         const weekdays = getWeekdaysProSupl(date);
@@ -171,61 +145,53 @@ const FetchData = () => {
         }
 
         try {
-            let i = 0;
-            for (const el of weekdays) {
+            const newZatmaveni = [...zatmaveni];
+            const newChybiciHodiny = Array(5).fill(Array(12).fill(styles.nechybi));
+            for (let i = 0; i < weekdays.length; i++) {
+                const el = weekdays[i];
                 const documentsRef = ref(database, `suplovani/${el}`);
-                const tridaQuery = query(documentsRef, orderByChild('trida'));
-                const queryProChybejiciTridy = query(documentsRef, orderByChild('label'),equalTo(trida));
+                const queryProChybejiciTridy = query(documentsRef, orderByChild('label'), equalTo(trida));
 
-                const denJeUlozen = await get(ref(database,`suplovani/${el}`)).then((snapshot)=>{
-                    const newZatmaveni = zatmaveni
-                    snapshot.exists()? newZatmaveni[i] = styles.bezZatmaveni: newZatmaveni[i] = styles.zatmaveni;
-                    setZatmaveni(newZatmaveni);
 
-                })
-                //nevim proc ale musi to tu byt, jinak se nezatmavy po prvim prepnuti tydnu dny, ktery nejsou v databazi
-                denJeUlozen !=null? neni_supl.push(formatDateStringKdyzNeniSupl(el)):null;
+                await get(documentsRef).then((snapshot) => {
+                    if (snapshot.exists()) {
+                        newZatmaveni[i] = styles.bezZatmaveni;
+                    } else {
+                        newZatmaveni[i] = styles.zatmaveni;
+                    }
+                });
 
-                const snapshot = await get(tridaQuery);
-                if (snapshot.exists()) {
-                    const promises:any = [];
 
-                    snapshot.forEach((dateSnapshot) => {
-
-                        // když je v suplovani pro ucebny vic trid na jednu ucebnu, je to lepsi jak to resit v functions
-                        const data = dateSnapshot.val();
-                        if (data.trida && data.trida.includes(trida)) {
-                            promises.push(
-                                Promise.resolve(data)
-                            );
-                        }
+                const chybejiciQuery = query(documentsRef, orderByChild('trida'), equalTo(trida));
+                const snapshotChybejici = await get(chybejiciQuery);
+                if (snapshotChybejici.exists()) {
+                    const promises: any = [];
+                    snapshotChybejici.forEach((dateSnapshot) => {
+                        promises.push(
+                            Promise.resolve(dateSnapshot.val())
+                        );
                     });
-                    const results:suplInterface[] = await Promise.all(promises);
+                    const results: suplInterface[] = await Promise.all(promises);
                     setSuplData((prevData) => [...prevData, ...results]);
                 }
 
-                const snap = await get(queryProChybejiciTridy)
-                if (snap.exists()){
+                const snap = await get(queryProChybejiciTridy);
+                if (snap.exists()) {
                     const data = snap.val();
                     const numbers: number[] = Object.values(data)
                         .map((item: any) => item.numbers) // Extract `numbers` array
                         .flat();
 
-                    //toto uz funguje z nejakeho duvodu tomu pomohlo json
-                    const styly = JSON.parse(JSON.stringify(chybiciHodiny));
-                    for (let j = numbers[0]; j <= numbers[numbers.length-1]; j++) {
-                        styly[i][j] = styles.chybi
-                    }
-                    setChybiciHodiny(styly);
+                    newChybiciHodiny[i] = newChybiciHodiny[i].map((hodina:object, hodinaIndex:number) =>
+                        numbers.includes(hodinaIndex) ? styles.chybi : styles.nechybi
+                    );
                 }
-
-                i++;
             }
+            setChybiciHodiny(newChybiciHodiny);
+            setZatmaveni(newZatmaveni);
 
-        } catch (error) {
+        }catch (error) {
             console.error('Error fetching documents:', error);
-        }finally {
-            setNenisupl(neni_supl)
         }
     }
 
@@ -278,13 +244,18 @@ const FetchData = () => {
         }
     };
 
+
     useEffect(() => {
         setDatum(new Date())
-
     }, []);
 
     useEffect(() => {
         let date;
+        setLoading(true)
+        navigation.setOptions({title:trida})
+
+        setChybiciHodiny(Array(5).fill(Array(12).fill(styles.nechybi)))
+
         if (datum){
              date = datum.toISOString().split('T')[0];
 
@@ -296,18 +267,43 @@ const FetchData = () => {
 
         setTyden(isOddOrEvenWeek(datum))
         getTrida().then(getOfflineData).then(suplovani).then(()=>setLoading(false))
-        navigation.setOptions({
-            title:trida
-        })
     }, [trida,datum]);
 
 
-    if (loading){return null}
+    useEffect(() => {
+        let timer:any;
 
+        if (loading) {
+            timer = setTimeout(() => {
+                Toast.show({
+                    type: ALERT_TYPE.WARNING,
+                    title: 'Špatné připojení k síti',
+                    textBody: 'Zkontorlujte zda jste připojení k síti.',
+                });
+            }, 3000);
+        }
+
+        // Cleanup the timer when loading changes or the component unmounts
+        return () => {
+            if (timer) {
+                clearTimeout(timer);
+            }
+        };
+    }, [loading]);
+
+    if (loading) {
+        return (
+            <AlertNotificationRoot>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                    <ActivityIndicator size="large" />
+                </View>
+            </AlertNotificationRoot>
+        );
+    }
 
     return (
-<View style={{flex:1}}>
-        <View style={styles.tlacitka}>
+        <View style={{flex:1, backgroundColor:"#fff"}}>
+            <View style={styles.tlacitka}>
             <TouchableOpacity onPress={() => {
                 if (datum) {
                     const nextWeek = new Date(datum);
@@ -320,6 +316,11 @@ const FetchData = () => {
                     <Text style={styles.backText}>...{dates ? dates[0] : null}</Text>
                 </View>
             </TouchableOpacity>
+
+                <TouchableOpacity onPress={()=>{
+                    setLoading(true)
+                    suplovani().then(()=>setLoading(false))
+                }}><Ionicons name="reload" size={30} color="black" /></TouchableOpacity>
 
             <TouchableOpacity onPress={() => {
                 if (datum) {
@@ -335,13 +336,14 @@ const FetchData = () => {
             </TouchableOpacity>
         </View>
 
+
                     <ReactNativeZoomableView maxZoom={3} // Allow zooming in up to 3x
                                              minZoom={0.3} // Allow zooming out to 50%
                                              initialZoom={0.65} // Default zoom level
                                              bindToBorders={true} // Allow panning beyond borders
                                              contentWidth={tableWidth} // Needed for correct calculations
                                              contentHeight={tableHeight} style={{
-                                                 flex:1,
+                                                 flex:8,
                                                 flexDirection: 'row',
                                                 width:tableWidth ,
                                                 height:tableHeight  }}
@@ -362,10 +364,10 @@ const FetchData = () => {
                                     </View>
                                     {den.map((hodina, hodinaIndex) => (
 
-                                        <View key={hodinaIndex} style={chybiciHodiny[denIndex][hodinaIndex]}>
+                                        <View key={hodinaIndex} style={chybiciHodiny? chybiciHodiny[denIndex][hodinaIndex]:styles.nechybi}>
 
                                             {denIndex === 0 ?
-                                                <View style={{ alignItems: 'center', borderWidth: 1,}}>
+                                                <View style={{ alignItems: 'center', borderWidth: 1, backgroundColor:"#ffffff"}}>
                                                     <Text>{casy[hodinaIndex].hodina}</Text>
                                                     <Text>{casy[hodinaIndex].cas}</Text>
                                                 </View>
@@ -419,7 +421,7 @@ const FetchData = () => {
     );
 };
 
-export default FetchData;
+export default Trida;
 const styles = StyleSheet.create({
     sideColumn: {
         backgroundColor: '#4A628A',
@@ -427,16 +429,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingHorizontal: 10,
         paddingVertical:30,
-        height:"100%"
-    },
-    back:{
-        flexDirection:"row",
-
-    },
-    backText:{
-        fontSize:20,
-        color:"#000000"
-
+        height:1200
     },
     sideText: {
         color: 'white',
@@ -444,21 +437,33 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         textAlign: 'center',
     },
-    rozvrh:{
-        flex:1,
-        height:1200,
-    },
+
     tlacitka:{
         width:"100%",
         flexDirection:"row",
         justifyContent:'space-between',
         alignSelf:"flex-start",
-
     },
+    back:{
+        flexDirection:"row",
+        alignItems:"center"
+    },
+    backText:{
+        fontSize:20,
+        color:"#000000"
+    },
+
+
+    rozvrh:{
+        flex:1,
+        height:1200,
+    },
+
     dnyContainer:{
         justifyContent:"center",
         borderWidth:1,
-        backgroundColor:"#fff"
+        backgroundColor:"#fff",
+
     },
     dny:{
         textAlign:"center",
@@ -475,7 +480,7 @@ const styles = StyleSheet.create({
         minHeight:50,
         flex:1,
         justifyContent:"center",
-        alignItems:"center"
+        alignItems:"center",
     },
 
     horniRadek: {
@@ -537,9 +542,9 @@ const styles = StyleSheet.create({
 
 
 
-
+    //dat jestli je tmavy rezim nebo ne jiny styles do funkce treba usestate
     zatmaveni:{
-        backgroundColor:"rgba(179, 215, 220, 0.9)",
+        backgroundColor:"rgba(39,39,39,0.62)",
         flex:1,
         flexDirection:"row",
         minHeight:200
@@ -547,13 +552,13 @@ const styles = StyleSheet.create({
     bezZatmaveni:{
         flex:1,
         flexDirection:"row",
-        minHeight:200
+        minHeight:200,
     },
     nechybi:{
         borderWidth:1
     },
     chybi:{
         borderWidth:1,
-        backgroundColor:"rgba(154,5,5,0.7)"
+        backgroundColor:"rgba(114,176,29,0.8)"
     }
 });

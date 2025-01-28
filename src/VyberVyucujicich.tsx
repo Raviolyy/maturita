@@ -7,10 +7,10 @@ import {NativeStackNavigationProp} from '@react-navigation/native-stack';
 
 
 
-function VyberTrid() {
+function VyberVyucujicich() {
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-    const [tridy, setTridy] = useState<string[]>([]);
-    const [trida,setTrida] = useState<string>()
+    const [vyucujici, setVyucujici] = useState<string[]>([]);
+    const [ucitel,setUcitel] = useState<string>()
 
     const Item: React.FC<{ title: string; ulozeni: (title: string) => void }> = ({ title, ulozeni }) => (
         <View style={styles.item}>
@@ -23,16 +23,16 @@ function VyberTrid() {
     const renderItem = ({ item }: { item: string }) => <Item title={item} ulozeni={ulozeni} />;
 
     const ulozeni = async (title: string) => {
-        await AsyncStorage.setItem("trida", title);
-        await AsyncStorage.removeItem("lichy")
-        await AsyncStorage.removeItem("sudy")
+        await AsyncStorage.setItem("ucitel", title);
+        await AsyncStorage.removeItem("lichyVyucujici")
+        await AsyncStorage.removeItem("sudyVyucujici")
 
-        navigation.navigate("Rozvrh",{scree:"Třída"});
+        navigation.navigate("Rozvrh",{screen:"Učitel"});
     };
 
-    async function ziskaniTrid() {
+    async function ziskaniVyucujich() {
         kontorla_pro_vyber_tird().then(async ()=>{
-            const documentsRef = ref(database, 'tridy');
+            const documentsRef = ref(database, 'vyucujici');
             onValue(
                 documentsRef,
                 (snapshot) => {
@@ -41,32 +41,31 @@ function VyberTrid() {
                         const childData = childSnapshot.val();
                         data.push(childData);
                     });
-                    setTridy(data);
+                    setVyucujici(data);
                 },
                 { onlyOnce: true }
             );
-            await AsyncStorage.setItem("vyberTrid", JSON.stringify(tridy));
+            await AsyncStorage.setItem("vyberVyucujicich", JSON.stringify(vyucujici));
         })
 
     }
 
     async function kontorla_pro_vyber_tird(){
-        const tridy_z_uloziste = await AsyncStorage.getItem("vyberTrid")
-        if (!tridy_z_uloziste){
-            await ziskaniTrid()
+        const vyucujici_z_uloziste = await AsyncStorage.getItem("vyberVyucujicich")
+        if (!vyucujici_z_uloziste){
+            await ziskaniVyucujich()
         }else{
-            setTridy(JSON.parse(tridy_z_uloziste))
+            setVyucujici(JSON.parse(vyucujici_z_uloziste))
         }
     }
     useEffect(() => {
-
-        trida===undefined ? ziskaniTrid() : navigation.navigate("Třída")
+        ucitel===undefined ? ziskaniVyucujich() : navigation.navigate("Rozvrh",{screen:"Učitel"});
     }, []);
 
     return (
         <View style={styles.container}>
             <FlatList
-                data={tridy}
+                data={vyucujici}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
             />
@@ -88,6 +87,7 @@ const styles = StyleSheet.create({
         borderRadius:30,
         alignItems:"stretch",
     },
+
     text:{
         fontSize: 18,
         fontWeight:"bold",
@@ -99,4 +99,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default VyberTrid
+export default VyberVyucujicich
