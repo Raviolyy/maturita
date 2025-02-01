@@ -3,7 +3,7 @@ import {getFirestore, collection, addDoc,getDocs,setDoc,disableNetwork} from "fi
 import { getDatabase,set,ref, get,onValue,orderByChild,equalTo,DataSnapshot,query} from "firebase/database";
 
 const firebaseConfig = {
-    
+    //musel jsem vymazat
 };
 
 
