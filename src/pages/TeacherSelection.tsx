@@ -1,71 +1,70 @@
 import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {useEffect, useState} from "react";
-import {database, ref, onValue} from '../firebaseconfig';
+import React, {useEffect, useState} from "react";
+import {database, ref, onValue} from '../../firebaseconfig';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {ParamListBase, useNavigation} from '@react-navigation/native';
 import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+import LoadingIndicator from "../components/LoadingIndicator";
 
-
-
-function VyberVyucujicich() {
+function TeacherSelection() {
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-    const [vyucujici, setVyucujici] = useState<string[]>([]);
-    const [ucitel,setUcitel] = useState<string>()
+    const [teacher,setTeacher] = useState<string[]>([]);
+    const [isLoading,setIsLoading] = useState<boolean>(false)
 
-    const Item: React.FC<{ title: string; ulozeni: (title: string) => void }> = ({ title, ulozeni }) => (
+    const Item: React.FC<{ title: string; saver: (title: string) => void }> = ({ title, saver }) => (
         <View style={styles.item}>
-            <TouchableOpacity style={{flex:1}} onPress={() => ulozeni(title)}>
+            <TouchableOpacity style={{flex:1}} onPress={() => saver(title)}>
                 <Text style={styles.text}>{title}</Text>
             </TouchableOpacity>
         </View>
     );
 
-    const renderItem = ({ item }: { item: string }) => <Item title={item} ulozeni={ulozeni} />;
+    const renderItem = ({ item }: { item: string }) => <Item title={item} saver={savingData} />;
 
-    const ulozeni = async (title: string) => {
-        await AsyncStorage.setItem("ucitel", title);
-        await AsyncStorage.removeItem("lichyVyucujici")
-        await AsyncStorage.removeItem("sudyVyucujici")
+    const savingData = async (title: string) => {
+        await AsyncStorage.setItem("teacher", title);
+        await AsyncStorage.removeItem("oddTeacherWeek")
+        await AsyncStorage.removeItem("evenTeacherWeek")
 
         navigation.navigate("Rozvrh",{screen:"Učitel"});
     };
 
-    async function ziskaniVyucujich() {
-        kontorla_pro_vyber_tird().then(async ()=>{
+    async function getTeachers() {
+        const savedTeacher = await AsyncStorage.getItem("teacherSelection")
+        if (savedTeacher == undefined ){
             const documentsRef = ref(database, 'vyucujici');
-            onValue(
-                documentsRef,
-                (snapshot) => {
+            onValue(documentsRef, (snapshot) => {
                     const data: string[] = [];
                     snapshot.forEach((childSnapshot) => {
                         const childData = childSnapshot.val();
                         data.push(childData);
                     });
-                    setVyucujici(data);
+                    setTeacher([...data])
+                    AsyncStorage.setItem("teacherSelection", JSON.stringify(data));
                 },
                 { onlyOnce: true }
             );
-            await AsyncStorage.setItem("vyberVyucujicich", JSON.stringify(vyucujici));
-        })
-
-    }
-
-    async function kontorla_pro_vyber_tird(){
-        const vyucujici_z_uloziste = await AsyncStorage.getItem("vyberVyucujicich")
-        if (!vyucujici_z_uloziste){
-            await ziskaniVyucujich()
         }else{
-            setVyucujici(JSON.parse(vyucujici_z_uloziste))
+            setTeacher(JSON.parse(savedTeacher))
         }
     }
+
     useEffect(() => {
-        ucitel===undefined ? ziskaniVyucujich() : navigation.navigate("Rozvrh",{screen:"Učitel"});
+        setIsLoading(true)
+        getTeachers().then(()=>{
+            setIsLoading(false)
+        }).catch(()=>{
+            setIsLoading(true)
+        })
     }, []);
 
+    if (isLoading){
+        return <LoadingIndicator isLoading={isLoading}/>
+    }
     return (
         <View style={styles.container}>
             <FlatList
-                data={vyucujici}
+                data={teacher}
                 renderItem={renderItem}
                 keyExtractor={(item, index) => index.toString()}
             />
@@ -99,4 +98,4 @@ const styles = StyleSheet.create({
 });
 
 
-export default VyberVyucujicich
+export default TeacherSelection
