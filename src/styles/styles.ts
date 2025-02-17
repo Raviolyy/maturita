@@ -16,10 +16,11 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     tlacitka: {
-        width: "100%",
-        flexDirection: "row",
-        justifyContent: 'space-between',
-        alignSelf: "flex-start",
+        width:"100%",
+        flexDirection:"row",
+        justifyContent:'space-between',
+        alignSelf:"flex-start",
+        alignItems:"center"
     },
     back: {
         margin:5,
@@ -28,7 +29,7 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 20,
-        color: '#0000FF',
+        color: '#007AFF',
     },
     rozvrh: {
         flex: 1,

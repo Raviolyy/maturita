@@ -9,7 +9,6 @@ interface LoadingIndicatorProps {
 const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ isLoading }) => {
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
-
         if (isLoading) {
             timer = setTimeout(() => {
                 Toast.show({

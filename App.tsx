@@ -1,5 +1,5 @@
 import { TouchableOpacity} from 'react-native';
-import React, {useEffect, useState} from "react";
+import React, {useCallback, useEffect, useState} from "react";
 
 import GradeComponent from './src/pages/ClassSchedule';
 import TeacherComponent from "./src/pages/TeachersSchedule";
@@ -19,6 +19,7 @@ import AntDesign from '@expo/vector-icons/AntDesign';
 
 const Stack = createNativeStackNavigator();
 const TabTop = createMaterialTopTabNavigator();
+
 const TabsForSelection = () => (
     <TabTop.Navigator>
         <TabTop.Screen name={"Třídy"} component={ClassSelection} />
@@ -75,6 +76,14 @@ function App() {
     })
   }, []);
 
+    const handleGoBack = useCallback((navigation:any) => {
+        if (navigation.canGoBack()) {
+            navigation.goBack();
+        } else {
+            navigation.navigate("Výběr");
+        }
+    }, []);
+
   if (isLoading){
     return null;
   }
@@ -86,7 +95,6 @@ function App() {
                   name={"Výběr"}
                   component={TabsForSelection}
                   options={() => ({
-
                       headerTitleAlign: "center",
                       headerTitleStyle: { fontWeight: "bold" },
                   })}
@@ -98,7 +106,7 @@ function App() {
                   options={({ navigation }) => ({
                       headerRight: () => <></>,
                       headerLeft: () => (
-                          <TouchableOpacity onPress={() => navigation.navigate("Výběr")}>
+                          <TouchableOpacity onPress={() => handleGoBack(navigation)}>
                               <AntDesign name="arrowleft" size={24} color="#007AFF" />
                           </TouchableOpacity>
                       ),

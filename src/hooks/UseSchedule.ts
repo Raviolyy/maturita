@@ -1,20 +1,8 @@
 import { useState } from 'react';
-import {StyleSheet} from "react-native";
 import {ParamListBase, useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
-
-interface SubstituteInterface {
-    den: string;
-    trida: string;
-    hodina: string;
-    chybejici: string;
-    predmet: string;
-    ucebna: string;
-    nahradni_ucebna: string;
-    poznamka: string;
-    zastupujici: string;
-}
-
+import {SubstituteInterface} from "../utils/SubstituteInterface";
+import styles from "../styles/styles";
 
 const useSchedule = () => {
     const [oddWeek, setOddWeek] = useState<[][][]>([]);
@@ -24,13 +12,8 @@ const useSchedule = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [availableDates, setAvailableDates] = useState<string[]>();
     const [selectedDate, setSelectedDate] = useState<Date>();
-    const [darkeningStyles, setDarkeningStyles] = useState([
-        styles.bezZatmaveni,
-        styles.bezZatmaveni,
-        styles.bezZatmaveni,
-        styles.bezZatmaveni,
-        styles.bezZatmaveni,
-    ]);
+
+    const [darkeningStyles, setDarkeningStyles] = useState(Array(5).fill(styles.bezZatmaveni));
     const timeSlots = [
         { hodina: "0", cas: "7:00 - 7:45" },
         { hodina: "1", cas: "7:50 - 8:35" },
@@ -46,10 +29,11 @@ const useSchedule = () => {
         { hodina: "11", cas: "16:40 - 17:25" },
     ];
     const daysOfWeek = ["pondělí", "úterý", "středa", "čtvrek", "pátek"];
+
     const [substitutionData, setSubstitutionData] = useState<SubstituteInterface[]>([]);
     const [missingPeriods, setMissingPeriods] = useState<any[]>();
     const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
-    const tableWidth = 1440;
+    const tableWidth = 1450;
     const tableHeight = 1200;
 
     return {
@@ -80,11 +64,4 @@ const useSchedule = () => {
         tableWidth,
     };
 };
-const styles = StyleSheet.create({
-    bezZatmaveni:{
-        flex:1,
-        flexDirection:"row",
-        minHeight:200,
-    },
-})
 export default useSchedule;

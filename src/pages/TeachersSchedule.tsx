@@ -1,31 +1,20 @@
 import React, {useEffect} from 'react';
-import {
-    Text,
-    View
-} from 'react-native';
+import {Text, View} from 'react-native';
+
 import {database, equalTo, get, orderByChild, query, ref} from "../../firebaseconfig"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {ReactNativeZoomableView} from '@openspacelabs/react-native-zoomable-view';
+
 import {getWeekdaysProSupl} from "../utils/weekUtils";
+import {SubstituteInterface} from "../utils/SubstituteInterface";
+import styles from "../styles/styles";
+
 import LoadingIndicator from "../components/LoadingIndicator";
 import DateNavigationButtons from "../components/DateNavigationButtons";
-import useSchedule from "../hooks/UseSchedule";
-import UseMainHook from "../hooks/UseMainHook";
-import styles from "../styles/styles";
 import NothingSelected from "../components/NothingSelected";
 
-interface substituteInterface {
-    den: string;
-    trida: string;
-    hodina: string;
-    chybejici: string;
-    predmet: string;
-    ucebna: string;
-    nahradni_ucebna: string;
-    poznamka: string;
-    zastupujici: string;
-}
-
+import UseMainHook from "../hooks/UseMainHook";
+import useSchedule from "../hooks/UseSchedule";
 
 const TeachersSchedule = () => {
     const {
@@ -108,7 +97,7 @@ const TeachersSchedule = () => {
                             Promise.resolve(dateSnapshot.val())
                         );
                     });
-                    const results: substituteInterface[] = await Promise.all(promises);
+                    const results: SubstituteInterface[] = await Promise.all(promises);
                     setSubstitutionData((prevData) => [...prevData, ...results]);
                 }
 
@@ -121,7 +110,7 @@ const TeachersSchedule = () => {
                             Promise.resolve(dateSnapshot.val())
                         );
                     });
-                    const results: substituteInterface[] = await Promise.all(promises);
+                    const results: SubstituteInterface[] = await Promise.all(promises);
                     setSubstitutionData((prevData) => [...prevData, ...results]);
                 }
 
@@ -242,18 +231,14 @@ const TeachersSchedule = () => {
                 </View>
 
                 <View style={styles.rozvrh}>
-
                     {(weekType == "Sudý týden" ? evenWeek : oddWeek).map((den, denIndex) => (
                         <View key={denIndex} style={darkeningStyles[denIndex]}>
-
                             <View style={styles.dnyContainer}>
                                 <Text style={styles.dny}>{daysOfWeek[denIndex]}</Text>
                                 {availableDates ? <Text style={styles.dny}>{availableDates[denIndex]}</Text> : null}
                             </View>
                             {den.map((hour, hourIndex) => (
-
                                 <View key={hourIndex} style={missingPeriods? missingPeriods[denIndex][hourIndex]:styles.nechybi}>
-
                                     {denIndex === 0 ?
                                         <View style={{ alignItems: 'center', borderWidth: 1, backgroundColor:"#ffffff"}}>
                                             <Text>{timeSlots[hourIndex].hodina}</Text>
@@ -269,7 +254,9 @@ const TeachersSchedule = () => {
                                             }
                                         );
                                         return (
-                                            <View key={partsIndex} style={parts[0]==="-"&&find?styles.skupinaNovaHodina:styles.skupina}>
+                                            <View key={partsIndex}
+                                                  style={parts[0]==="-"&&find?styles.skupinaNovaHodina:styles.skupina}>
+
                                                 {find != undefined && find.poznamka == "odpadá" || find?.zastupujici == "....." ?
                                                     <View>
                                                         <Text style={[styles.parta]}>{parts[3]}</Text>

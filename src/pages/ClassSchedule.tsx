@@ -1,30 +1,21 @@
 import React, {useEffect} from 'react';
-import {
-    View,
-    Text,
-} from 'react-native';
+import {View, Text,} from 'react-native';
+
 import {database, ref, get, query, orderByChild, equalTo} from "../../firebaseconfig"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
-import LoadingIndicator from "../components/LoadingIndicator";
-import DateNavigationButtons from "../components/DateNavigationButtons";
+
+import styles from "../styles/styles";
 import { getWeekdaysProSupl} from "../utils/weekUtils";
+
 import useSchedule from "../hooks/UseSchedule";
 import UseMainHook from "../hooks/UseMainHook";
-import styles from "../styles/styles";
-import NothingSelected from "../components/NothingSelected";
 
-interface substituteInterface {
-    den: string;
-    trida: string;
-    hodina: string;
-    chybejici: string;
-    predmet: string;
-    ucebna: string;
-    nahradni_ucebna: string;
-    poznamka: string;
-    zastupujici: string;
-}
+import NothingSelected from "../components/NothingSelected";
+import LoadingIndicator from "../components/LoadingIndicator";
+import DateNavigationButtons from "../components/DateNavigationButtons";
+import {SubstituteInterface} from "../utils/SubstituteInterface";
+
 
 const ClassSchedule = () => {
     const {
@@ -90,7 +81,7 @@ const ClassSchedule = () => {
                             Promise.resolve(dateSnapshot.val())
                         );
                     });
-                    const results: substituteInterface[] = await Promise.all(promises);
+                    const results: SubstituteInterface[] = await Promise.all(promises);
                     setSubstitutionData((prevData) => [...prevData, ...results]);
                 }
 
@@ -252,10 +243,12 @@ const ClassSchedule = () => {
 
                                                                 <View style={[styles.spodniRadek]}>
                                                                     {find != undefined ?
-                                                                        find.zastupujici !== "" ? <Text style={styles.zastupujiciUcitel}>{find.zastupujici}</Text> : <Text style={styles.teacher}>{part[1]}</Text>
+                                                                        find.zastupujici !== "" ? <Text style={styles.zastupujiciUcitel}>{find.zastupujici}</Text>
+                                                                            : <Text style={styles.teacher}>{part[1]}</Text>
                                                                         : <Text style={styles.teacher}>{part[1]}</Text>}
                                                                     {find != undefined ?
-                                                                        find.nahradni_ucebna ? <Text style={styles.suplovanaTrida}>{find.nahradni_ucebna}</Text> : <Text style={styles.trida}>{part[2]}</Text>
+                                                                        find.nahradni_ucebna ? <Text style={styles.suplovanaTrida}>{find.nahradni_ucebna}</Text>
+                                                                            : <Text style={styles.trida}>{part[2]}</Text>
                                                                         : <Text style={styles.trida}>{part[2]}</Text>}
                                                                 </View>
                                                             </View>}

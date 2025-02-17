@@ -11,16 +11,6 @@ function TeacherSelection() {
     const [teacher,setTeacher] = useState<string[]>([]);
     const [isLoading,setIsLoading] = useState<boolean>(false)
 
-    const Item: React.FC<{ title: string; saver: (title: string) => void }> = ({ title, saver }) => (
-        <View style={styles.item}>
-            <TouchableOpacity style={{flex:1}} onPress={() => saver(title)}>
-                <Text style={styles.text}>{title}</Text>
-            </TouchableOpacity>
-        </View>
-    );
-
-    const renderItem = ({ item }: { item: string }) => <Item title={item} saver={savingData} />;
-
     const savingData = async (title: string) => {
         await AsyncStorage.setItem("teacher", title);
         await AsyncStorage.removeItem("oddTeacherWeek")
@@ -51,10 +41,11 @@ function TeacherSelection() {
 
     useEffect(() => {
         setIsLoading(true)
+
         getTeachers().then(()=>{
             setIsLoading(false)
         }).catch(()=>{
-            setIsLoading(true)
+            setIsLoading(false)
         })
     }, []);
 
@@ -65,7 +56,13 @@ function TeacherSelection() {
         <View style={styles.container}>
             <FlatList
                 data={teacher}
-                renderItem={renderItem}
+                renderItem={({ item }: { item: string }) => (
+                    <View style={styles.item}>
+                        <TouchableOpacity style={{ flex: 1 }} onPress={() => savingData(item)}>
+                            <Text style={styles.text}>{item}</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
                 keyExtractor={(item, index) => index.toString()}
             />
         </View>

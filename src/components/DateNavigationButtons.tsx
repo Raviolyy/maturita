@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import Ionicons from "@expo/vector-icons/Ionicons";
 import {getPreviousFridayAndNextMonday} from "../utils/weekUtils";
+import styles from "../styles/styles";
 
 interface DateNavigationButtonsProps {
     selectedDate: Date | null;
@@ -21,12 +22,14 @@ const DateNavigationButtons: React.FC<DateNavigationButtonsProps> = ({
                                                                          setIsLoading,
                                                                          fetchSubstituteData,
                                                                      }) => {
+
     const [fridayMonday,setFridayMonday] = useState<FridayMonday>();
 
     useEffect(() => {
         const newDate = selectedDate?.toISOString().split('T')[0];
         setFridayMonday(getPreviousFridayAndNextMonday(newDate||""));
     }, [selectedDate]);
+
     return (
         <View style={styles.tlacitka}>
             <TouchableOpacity
@@ -76,22 +79,3 @@ const DateNavigationButtons: React.FC<DateNavigationButtonsProps> = ({
 
 export default DateNavigationButtons;
 
-const styles = StyleSheet.create({
-    back:{
-        flexDirection:"row",
-        alignItems:"center"
-    },
-    backText:{
-        fontSize:20,
-        color:"#000000",
-    },
-
-    tlacitka:{
-        width:"100%",
-        flexDirection:"row",
-        justifyContent:'space-between',
-        alignSelf:"flex-start",
-        alignItems:"center"
-
-    },
-});
